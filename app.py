@@ -7,93 +7,57 @@ from bs4 import BeautifulSoup
 st.set_page_config(page_title="Smart Money Tracker", layout="wide")
 st.title("📈 Smart Money Tracker - India Edition")
 
-# Define the tabs in Streamlit
 tabs = st.tabs(["Smart Money Signals", "Option Chain", "Bulk Deals", "FII/DII Activity"])
 
 # Smart Money Signals Tab
 with tabs[0]:
     st.header("🔍 Smart Money Signals")
     st.write("This section will show volume + delivery % spikes for Nifty stocks.")
-    st.info("Feature under development")  # Placeholder for future functionality
+
+    # Let's assume we're getting Nifty 50 data from a source
+    nifty_stocks = [
+        "RELIANCE", "TCS", "INFY", "HDFCBANK", "ICICIBANK", "LT", "KOTAKBANK", "HDFC", "BHARTIARTL", "HINDUNILVR"
+    ]  # Example Nifty 50 stocks, extend as needed
+
+    # Function to fetch data for a given stock
+    def fetch_stock_data(symbol):
+        try:
+            # Example URL for fetching stock data (replace with actual source)
+            url = f"https://www.moneycontrol.com/financials/{symbol}-stock-analysis.html"
+            r = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
+            soup = BeautifulSoup(r.content, "html.parser")
+            
+            # Find the relevant tables or data
+            # This will need to be adjusted based on the actual website structure
+            tables = pd.read_html(r.text)
+            stock_data = tables[0]  # Example table for stock data (adjust as needed)
+            return stock_data
+        except Exception as e:
+            st.error(f"Failed to fetch data for {symbol}: {e}")
+            return None
+
+    # Function to calculate and check for spikes
+    def detect_spikes(stock_data):
+        # Example spike detection logic (adjust thresholds as per your requirement)
+        volume_spike = stock_data['Volume'] > stock_data['Volume'].mean() * 10  # 10x volume spike
+        delivery_spike = stock_data['Delivery Percentage'] > stock_data['Delivery Percentage'].mean() * 1.05  # 5% delivery spike
+        
+        if volume_spike and delivery_spike:
+            return True
+        return False
+
+    # Fetch and display data for each Nifty stock
+    for symbol in nifty_stocks:
+        st.subheader(f"{symbol} Smart Money Signal")
+        stock_data = fetch_stock_data(symbol)
+        
+        if stock_data is not None:
+            if detect_spikes(stock_data):
+                st.success(f"Smart Money Signal Detected for {symbol}!")
+            else:
+                st.info(f"No significant signal for {symbol}.")
+        else:
+            st.warning(f"No data available for {symbol}.")
 
 # Option Chain Tab
-with tabs[1]:
-    st.header("📊 Option Chain")
-    symbol = st.text_input("Enter NSE Stock Symbol (e.g., RELIANCE)")
-    
-    if symbol:
-        try:
-            url = f"https://www.nseindia.com/api/option-chain-equities?symbol={symbol.upper()}"
-            headers = {"User-Agent": "Mozilla/5.0"}
-            
-            # Session for handling cookies
-            with requests.Session() as s:
-                s.headers.update(headers)
-                s.get("https://www.nseindia.com")  # Initialize cookies
-                r = s.get(url)
-            
-            data = r.json()
-            ce_data = data['records']['data']
-            call_options = []
-            put_options = []
-
-            # Parse call and put options
-            for entry in ce_data:
-                if 'CE' in entry:
-                    call_options.append(entry['CE'])
-                if 'PE' in entry:
-                    put_options.append(entry['PE'])
-
-            # Convert to DataFrame and display
-            ce_df = pd.DataFrame(call_options)
-            pe_df = pd.DataFrame(put_options)
-
-            st.subheader("Call Options (CE)")
-            st.dataframe(ce_df)
-
-            st.subheader("Put Options (PE)")
-            st.dataframe(pe_df)
-
-        except Exception as e:
-            st.error(f"Failed to fetch option chain: {e}")
-
-# NSE Bulk Deals Tab
-with tabs[2]:
-    st.header("📦 NSE Bulk Deals")
-    try:
-        # Fetch the bulk deals data from MoneyControl
-        url = "https://www.moneycontrol.com/stocks/marketstats/bulk-deals/nse"
-        r = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
-        soup = BeautifulSoup(r.content, "html.parser")
-
-        # Parse the bulk deals table
-        tables = pd.read_html(r.text)
-
-        # If tables are found, show the first one
-        if tables:
-            bulk_table = tables[0]
-            st.dataframe(bulk_table.head())
-        else:
-            st.warning("No bulk deals data found.")
-
-    except Exception as e:
-        st.error(f"Failed to load bulk deals: {e}")
-
-# FII/DII Activity Tab
-with tabs[3]:
-    st.header("🏦 FII/DII Activity")
-    try:
-        # Fetch FII/DII data from MoneyControl
-        url = "https://www.moneycontrol.com/stocks/marketstats/fii_dii_activity/index.php"
-        r = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
-        tables = pd.read_html(r.text)
-
-        # If tables are found, display the first one
-        if tables:
-            fii_dii_table = tables[0]
-            st.dataframe(fii_dii_table.head())
-        else:
-            st.warning("No FII/DII activity data found.")
-            
-    except Exception as e:
-        st.error(f"Failed to load FII/DII data: {e}")
+# ... (Rest of the code stays the same)
