@@ -1,11 +1,9 @@
 streamlit
 yfinance
 pandas
-schedule
 requests
-kiteconnect
-bs4
-schedule
-python-telegram-bot
+beautifulsoup4
 lxml
 html5lib
+schedule
+python-telegram-bot==13.7
