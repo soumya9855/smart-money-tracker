@@ -7,3 +7,4 @@ kiteconnect
 bs4
 schedule
 python-telegram-bot
+lxml
